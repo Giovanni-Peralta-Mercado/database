@@ -1,4 +1,5 @@
-const express = require('express')
+const express = require('express');
+const usersRouter = require('./routes/users');
 
 class Server{
     constructor(){
@@ -6,8 +7,8 @@ class Server{
         this.port=3000;     //puerto para el servidor
 
         //http://localhost:3000/api/v1/users
-        this.basePath='/api/v1'
-        this.usersPath=`${basePath}/users`;
+        this.basePath='/api/v1';
+        this.usersPath=`${this.basePath}/users`;
 
         this.middlewares();
         this.routes();
@@ -19,7 +20,7 @@ class Server{
     }
 
     routes(){
-        this.app.use(this.usersPath,FUNTION);
+        this.app.use(this.usersPath,usersRouter);
     }
 
     listen(){
