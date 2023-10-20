@@ -49,5 +49,18 @@ const usersModel ={
         WHERE email = ?
     `,
 
+    updateRow:`
+    pendiente
+    `,
+    deleteRow:`
+    UPDATE
+        users
+    SET
+        is_active = 0
+    WHERE
+        id =?
+
+    `
+
 };
 module.exports=usersModel;

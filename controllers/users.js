@@ -119,4 +119,43 @@ const addUser = async (req = request,res = response) =>{
     }
 }
 
-module.exports={usersList,listUserByID,addUser};
+const updateUser = async (req = request, res = response) => {
+    //pendiente
+}
+
+const deleteUser = async (req = request, res = response) => {
+    let conn;
+
+    try {
+        conn = await pool.getConnection();
+        const {id} = req.params;
+
+        const [userExists] = await conn.query(
+            usersModel.getByID,
+            [id],
+            (err) => {if (err) throw err;}
+        );
+
+        if (!userExists|| userExists.is_active === 0){
+            res.status(404).json({msg:'User not found'});
+            return;
+        }
+
+        const userDelete = await conn.query(
+            usersModel.deleteRow,
+            [id],
+            (err) => {if (err) throw err;}
+        );
+
+        if (userDelete.affectedRows === 0) 
+            throw new Error ({msg: 'Failed to delete user'});
+
+        res.json({msg: 'User deleted succesfully'});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json(error); 
+    }finally{
+        if (conn) conn.end();
+    }
+}
+module.exports={usersList,listUserByID,addUser,deleteUser};
