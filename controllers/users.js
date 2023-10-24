@@ -119,6 +119,102 @@ const addUser = async (req = request,res = response) =>{
     }
 }
 
+//ACTUALIZACIÓN DE DATOS CREADO POR EL PROFE 
+const updateUser=async(req, res)=>{
+    const {
+        username,
+        email,
+        password,
+        name,
+        lastname,
+        phone_number,
+        role_id,
+        is_active
+    } = req.body;
+
+const {id} = req.params;
+let newUserData=[
+    username,
+    email,
+    password,
+    name,
+    lastname,
+    phone_number,
+    role_id,
+    is_active  
+];
+let conn;
+try{
+    conn = await pool.getConnection();
+const [userExists]=await conn.query(
+    usersModel.getByID,
+    [id],
+    (err) => {if (err) throw err;}
+);
+if (!userExists || userExists.id_active === 0){
+    res.status(404).json({msg:'User not found'});
+    return;
+}
+
+const [usernameUser] = await conn.query(
+    usersModel.getByUsername,
+    [username],
+    (err) => {if (err) throw err;}
+);
+if (usernameUser){
+    res.status(409).json({msg:`User with username ${username} already exists`});
+    return;
+}
+
+const [emailUser] = await conn.query(
+    usersModel.getByEmail,
+    [email],
+    (err) => {if (err) throw err;}
+);
+if (emailUser){
+    res.status(409).json({msg:`User with email ${email} already exists`});
+    return;
+}
+
+const oldUserData = [
+    userExists.username,
+    userExists.email,
+    userExists.password,
+    userExists.name,
+    userExists.lastname,
+    userExists.phone_number,
+    userExists.role_id,
+    userExists.is_active  
+];
+
+newUserData.forEach((userData, index)=> {
+    if (!userData){
+        newUserData[index] = oldUserData[index];
+    }
+})
+
+const userUpdate = await conn.query(
+    usersModel.updateRow,
+    [...newUserData, id],
+    (err) => {if (err) throw err;}
+);
+if(userUpdate.affecteRows === 0){
+    throw new Error ('User not updated');
+}
+res.json({msg:'User updated successfully'})
+}catch (error){
+        console.log(error);
+        res.status(500).json(error);
+    } finally{
+        if (conn) conn.end();
+    }
+}
+
+
+/*
+
+//ACTUALIZACIÓN DE DATOS CREADO POR GIOVANNI DE JESUS PERALTA MERCADO
+
 const actualizarUser = async (req = request, res = response) => {
     const { id } = req.params;
 
@@ -171,8 +267,9 @@ const actualizarUser = async (req = request, res = response) => {
             (err) => { if (err) throw err; }
         );
  
-        /*para verificar si se ha encontrado un username ocupado y si ese 
-        username ocupado no pertenece al mismo usuario que se está tratando de actualizar*/
+        //para verificar si se ha encontrado un username ocupado y si ese 
+        //username ocupado no pertenece al mismo usuario que se está tratando de actualizar
+
         if (UsernameOcupado && UsernameOcupado.id !== id) {
             res.status(409).json({ msg: `User with username ${username} already exists` });
             return;
@@ -186,8 +283,8 @@ const actualizarUser = async (req = request, res = response) => {
             (err) => { if (err) throw err; }
         );
 
-        /*para verificar si se ha encontrado un correo electrónico ocupado y si ese 
-        correo electrónico ocupado no pertenece al mismo usuario que se está tratando de actualizar*/ 
+        //para verificar si se ha encontrado un correo electrónico ocupado y si ese 
+        //correo electrónico ocupado no pertenece al mismo usuario que se está tratando de actualizar 
 
         if (EmailOcupado && EmailOcupado.id !== id) {
             res.status(409).json({ msg: `User with email ${email} already exists` });
@@ -217,7 +314,7 @@ const actualizarUser = async (req = request, res = response) => {
     }
 }
 
-
+*/
 
 
 const deleteUser = async (req = request, res = response) => {
@@ -255,4 +352,4 @@ const deleteUser = async (req = request, res = response) => {
         if (conn) conn.end();
     }
 }
-module.exports={usersList,listUserByID,addUser,deleteUser,actualizarUser};
+module.exports={usersList,listUserByID,addUser,deleteUser,updateUser/*actualizarUser*/};
