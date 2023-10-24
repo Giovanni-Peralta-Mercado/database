@@ -119,9 +119,106 @@ const addUser = async (req = request,res = response) =>{
     }
 }
 
-const updateUser = async (req = request, res = response) => {
-    //pendiente
+const actualizarUser = async (req = request, res = response) => {
+    const { id } = req.params;
+
+    //Aqui comprueba de que no falte informacion, sino nos mandara un mensaje indicando esto
+    const {
+        username,
+        email,
+        password,
+        name,
+        lastname,
+        phone_number,
+        role_id,
+        is_active
+    } = req.body;
+
+    if (!username || !email || !password || !name || !lastname || !phone_number || !role_id || !is_active) {
+        res.status(400).json({ msg: 'Missing information' });
+        return;
+    }
+
+    const user = [username,email,password,name,lastname,phone_number,role_id,is_active];
+
+    let conn;
+    
+
+    try {
+        
+
+        //Comprueba de que el usuario exista 
+        conn = await pool.getConnection();
+
+        const [VerificarUser] = await conn.query(
+            usersModel.getByID,
+            [id],
+            (err) => { if (err) throw err; }
+        );
+        //sino nos manda un mensaje de que no existe
+
+        if (!VerificarUser) {
+            res.status(404).json({ msg: `User with ID ${id} not found` });
+            return;
+        }
+
+        //para verificar si el username ya existe.
+        
+
+        const [UsernameOcupado] = await conn.query(
+            usersModel.getByUsername,
+            [username],
+            (err) => { if (err) throw err; }
+        );
+ 
+        /*para verificar si se ha encontrado un username ocupado y si ese 
+        username ocupado no pertenece al mismo usuario que se está tratando de actualizar*/
+        if (UsernameOcupado && UsernameOcupado.id !== id) {
+            res.status(409).json({ msg: `User with username ${username} already exists` });
+            return;
+        }
+
+        //para verificar si el email ya existe.
+        
+        const [EmailOcupado] = await conn.query(
+            usersModel.getByEmail,
+            [email],
+            (err) => { if (err) throw err; }
+        );
+
+        /*para verificar si se ha encontrado un correo electrónico ocupado y si ese 
+        correo electrónico ocupado no pertenece al mismo usuario que se está tratando de actualizar*/ 
+
+        if (EmailOcupado && EmailOcupado.id !== id) {
+            res.status(409).json({ msg: `User with email ${email} already exists` });
+            return;
+        }
+
+        //Aqui hace la modificacion de los datos
+
+        const updatedUser = await conn.query(
+            usersModel.updateRow,
+            [...user,id],
+            (err) => { if (err) throw err; }
+        );
+
+        if (updatedUser.affectedRows === 0) {
+            throw new Error({ msg: 'Failed to update user' });
+        }
+
+        //Si todo sale bien nos dira que se actualizo correctamente
+
+        res.json({ msg: 'updated successfully' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json(error);
+    } finally {
+        if (conn) conn.end();
+    }
 }
+
+
+
 
 const deleteUser = async (req = request, res = response) => {
     let conn;
@@ -158,4 +255,4 @@ const deleteUser = async (req = request, res = response) => {
         if (conn) conn.end();
     }
 }
-module.exports={usersList,listUserByID,addUser,deleteUser};
+module.exports={usersList,listUserByID,addUser,deleteUser,actualizarUser};

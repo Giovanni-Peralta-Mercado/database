@@ -50,8 +50,21 @@ const usersModel ={
     `,
 
     updateRow:`
-    pendiente
-    `,
+    UPDATE
+        users
+    SET
+        username = ?,
+        email = ?,
+        password = ?,
+        name = ?,
+        lastname = ?,
+        phone_number = ?,
+        role_id = ?,
+        is_active = ?
+    WHERE
+        id=?`,
+    
+
     deleteRow:`
     UPDATE
         users
