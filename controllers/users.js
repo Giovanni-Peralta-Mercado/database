@@ -1,4 +1,5 @@
-const {request,response, json} = require('express');
+const {request,response} = require('express');
+const bcrypt = require('bcrypt');
 const pool = require('../db');
 const usersModel = require('../models/users');
 
@@ -73,7 +74,21 @@ const addUser = async (req = request,res = response) =>{
         return;
      }
 
-     const user = [username,email,password,name,lastname,phone_number,role_id,is_active];
+
+const saltRounds = 10;
+const passwordHash = await bcrypt.hash(password, saltRounds);
+
+
+     const user = [
+        username,
+        email,
+        passwordHash,
+        name,
+        lastname,
+        phone_number,
+        role_id,
+        is_active
+    ];
 
 
     let conn;
@@ -133,10 +148,18 @@ const updateUser=async(req, res)=>{
     } = req.body;
 
 const {id} = req.params;
+
+let passwordHash;
+
+if (password){
+    const saltRounds = 10;
+    passwordHash = await bcrypt.hash(password,saltRounds);
+}
+
 let newUserData=[
     username,
     email,
-    password,
+    passwordHash,
     name,
     lastname,
     phone_number,
@@ -352,4 +375,7 @@ const deleteUser = async (req = request, res = response) => {
         if (conn) conn.end();
     }
 }
+
+
+
 module.exports={usersList,listUserByID,addUser,deleteUser,updateUser/*actualizarUser*/};
